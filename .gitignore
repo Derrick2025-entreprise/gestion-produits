@@ -31,3 +31,8 @@ build/
 
 ### VS Code ###
 .vscode/
+
+### Analyse SonarQube et outils locaux ###
+.sonar/
+.scannerwork/
+.claude/
