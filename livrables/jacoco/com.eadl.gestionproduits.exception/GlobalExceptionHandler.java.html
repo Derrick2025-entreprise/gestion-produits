@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="fr"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>GlobalExceptionHandler.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">gestion-produits</a> &gt; <a href="index.source.html" class="el_package">com.eadl.gestionproduits.exception</a> &gt; <span class="el_source">GlobalExceptionHandler.java</span></div><h1>GlobalExceptionHandler.java</h1><pre class="source lang-java linenums">package com.eadl.gestionproduits.exception;
+
+import com.eadl.gestionproduits.dto.ApiError;
+import com.eadl.gestionproduits.dto.FieldViolation;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.ConstraintViolation;
+import jakarta.validation.ConstraintViolationException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.HttpStatusCode;
+import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.web.ErrorResponse;
+import org.springframework.web.HttpMediaTypeNotSupportedException;
+import org.springframework.web.HttpRequestMethodNotSupportedException;
+import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.MissingServletRequestParameterException;
+import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.method.annotation.HandlerMethodValidationException;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
+
+import java.time.Instant;
+import java.util.List;
+
+
+@RestControllerAdvice
+<span class="fc" id="L30">public class GlobalExceptionHandler {</span>
+
+<span class="fc" id="L32">    private static final Logger log = LoggerFactory.getLogger(GlobalExceptionHandler.class);</span>
+    private static final String INVALID_DATA = &quot;Données invalides&quot;;
+    private static final String INVALID_PARAMETERS = &quot;Paramètres de requête invalides&quot;;
+
+    @ExceptionHandler({ProductNotFoundException.class, CategoryNotFoundException.class})
+    public ResponseEntity&lt;ApiError&gt; handleNotFound(BusinessException ex, HttpServletRequest req) {
+<span class="fc" id="L38">        return business(HttpStatus.NOT_FOUND, ex, req);</span>
+    }
+
+    @ExceptionHandler({DuplicateProductException.class, DuplicateCategoryException.class,
+            InsufficientStockException.class})
+    public ResponseEntity&lt;ApiError&gt; handleConflict(BusinessException ex, HttpServletRequest req) {
+<span class="fc" id="L44">        return business(HttpStatus.CONFLICT, ex, req);</span>
+    }
+
+    @ExceptionHandler(InvalidParameterException.class)
+    public ResponseEntity&lt;ApiError&gt; handleInvalidParameter(BusinessException ex, HttpServletRequest req) {
+<span class="fc" id="L49">        return business(HttpStatus.BAD_REQUEST, ex, req);</span>
+    }
+
+    private static ResponseEntity&lt;ApiError&gt; business(HttpStatus status, BusinessException ex, HttpServletRequest req) {
+<span class="fc" id="L53">        log.warn(&quot;{} sur {} : {}&quot;, ex.getCode(), req.getRequestURI(), ex.getMessage());</span>
+<span class="fc" id="L54">        return build(status, ex.getCode(), ex.getMessage(), req, List.of());</span>
+    }
+
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public ResponseEntity&lt;ApiError&gt; handleValidation(MethodArgumentNotValidException ex, HttpServletRequest req) {
+<span class="fc" id="L59">        List&lt;FieldViolation&gt; violations = ex.getBindingResult().getFieldErrors().stream()</span>
+<span class="fc" id="L60">                .map(e -&gt; new FieldViolation(e.getField(), e.getDefaultMessage()))</span>
+<span class="fc" id="L61">                .toList();</span>
+<span class="fc" id="L62">        return build(HttpStatus.BAD_REQUEST, ErrorCodes.VALIDATION_ERROR, INVALID_DATA, req, violations);</span>
+    }
+
+    @ExceptionHandler(ConstraintViolationException.class)
+    public ResponseEntity&lt;ApiError&gt; handleConstraintViolation(ConstraintViolationException ex,
+                                                              HttpServletRequest req) {
+<span class="fc" id="L68">        List&lt;FieldViolation&gt; violations = ex.getConstraintViolations().stream()</span>
+<span class="fc" id="L69">                .map(v -&gt; new FieldViolation(lastNode(v), v.getMessage()))</span>
+<span class="fc" id="L70">                .toList();</span>
+<span class="fc" id="L71">        return build(HttpStatus.BAD_REQUEST, ErrorCodes.INVALID_PARAMETER, INVALID_PARAMETERS, req, violations);</span>
+    }
+
+    @ExceptionHandler(HandlerMethodValidationException.class)
+    public ResponseEntity&lt;ApiError&gt; handleMethodValidation(HandlerMethodValidationException ex,
+                                                           HttpServletRequest req) {
+<span class="nc" id="L77">        return build(HttpStatus.BAD_REQUEST, ErrorCodes.INVALID_PARAMETER, INVALID_PARAMETERS, req, List.of());</span>
+    }
+
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ResponseEntity&lt;ApiError&gt; handleUnreadable(HttpMessageNotReadableException ex, HttpServletRequest req) {
+<span class="fc" id="L82">        return build(HttpStatus.BAD_REQUEST, ErrorCodes.MALFORMED_JSON,</span>
+<span class="fc" id="L83">                &quot;Corps JSON mal formé ou type de champ incorrect&quot;, req, List.of());</span>
+    }
+
+    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+    public ResponseEntity&lt;ApiError&gt; handleTypeMismatch(MethodArgumentTypeMismatchException ex,
+                                                       HttpServletRequest req) {
+<span class="fc" id="L89">        return build(HttpStatus.BAD_REQUEST, ErrorCodes.TYPE_MISMATCH,</span>
+<span class="fc" id="L90">                &quot;Valeur invalide pour le paramètre &quot; + ex.getName(), req, List.of());</span>
+    }
+
+
+    @ExceptionHandler({NoResourceFoundException.class, HttpRequestMethodNotSupportedException.class,
+            HttpMediaTypeNotSupportedException.class, MissingServletRequestParameterException.class})
+    public ResponseEntity&lt;ApiError&gt; handleFrameworkError(Exception ex, HttpServletRequest req) {
+<span class="fc" id="L97">        HttpStatusCode status = ((ErrorResponse) ex).getStatusCode();</span>
+<span class="fc" id="L98">        HttpStatus httpStatus = HttpStatus.valueOf(status.value());</span>
+<span class="fc" id="L99">        return build(httpStatus, httpStatus.name(), ex.getMessage(), req, List.of());</span>
+    }
+
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity&lt;ApiError&gt; handleUnexpected(Exception ex, HttpServletRequest req) {
+<span class="fc" id="L104">        log.error(&quot;Erreur inattendue sur {}&quot;, req.getRequestURI(), ex);</span>
+<span class="fc" id="L105">        return build(HttpStatus.INTERNAL_SERVER_ERROR, ErrorCodes.INTERNAL_ERROR,</span>
+<span class="fc" id="L106">                &quot;Une erreur interne est survenue&quot;, req, List.of());</span>
+    }
+
+    private static String lastNode(ConstraintViolation&lt;?&gt; violation) {
+<span class="fc" id="L110">        String path = violation.getPropertyPath().toString();</span>
+<span class="fc" id="L111">        int dot = path.lastIndexOf('.');</span>
+<span class="pc bpc" id="L112" title="1 of 2 branches missed.">        return dot &gt;= 0 ? path.substring(dot + 1) : path;</span>
+    }
+
+    private static ResponseEntity&lt;ApiError&gt; build(HttpStatus status, String code, String message,
+                                                  HttpServletRequest req, List&lt;FieldViolation&gt; violations) {
+<span class="fc" id="L117">        ApiError body = new ApiError(Instant.now(), status.value(), code, message, req.getRequestURI(), violations);</span>
+<span class="fc" id="L118">        return ResponseEntity.status(status).body(body);</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.13.202504020838</span></div></body></html>

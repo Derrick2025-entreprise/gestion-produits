@@ -1,0 +1,137 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="fr"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ProductService.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">gestion-produits</a> &gt; <a href="index.source.html" class="el_package">com.eadl.gestionproduits.service</a> &gt; <span class="el_source">ProductService.java</span></div><h1>ProductService.java</h1><pre class="source lang-java linenums">package com.eadl.gestionproduits.service;
+
+import com.eadl.gestionproduits.dto.PageResponse;
+import com.eadl.gestionproduits.dto.ProductRequest;
+import com.eadl.gestionproduits.dto.ProductResponse;
+import com.eadl.gestionproduits.entity.Category;
+import com.eadl.gestionproduits.entity.Product;
+import com.eadl.gestionproduits.exception.CategoryNotFoundException;
+import com.eadl.gestionproduits.exception.DuplicateProductException;
+import com.eadl.gestionproduits.exception.InsufficientStockException;
+import com.eadl.gestionproduits.exception.InvalidParameterException;
+import com.eadl.gestionproduits.exception.ProductNotFoundException;
+import com.eadl.gestionproduits.mapper.ProductMapper;
+import com.eadl.gestionproduits.repository.CategoryRepository;
+import com.eadl.gestionproduits.repository.ProductRepository;
+import org.springframework.data.domain.Pageable;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.math.BigDecimal;
+import java.util.Set;
+
+/**
+ * Règles de gestion des produits (F1 à F6, RG1 à RG8).
+ */
+@Service
+@Transactional(readOnly = true)
+public class ProductService {
+
+<span class="fc" id="L30">    private static final Set&lt;String&gt; SORTABLE_FIELDS =</span>
+<span class="fc" id="L31">            Set.of(&quot;id&quot;, &quot;sku&quot;, &quot;name&quot;, &quot;price&quot;, &quot;quantity&quot;, &quot;createdAt&quot;, &quot;updatedAt&quot;);</span>
+
+    private final ProductRepository productRepository;
+    private final CategoryRepository categoryRepository;
+
+<span class="fc" id="L36">    public ProductService(ProductRepository productRepository, CategoryRepository categoryRepository) {</span>
+<span class="fc" id="L37">        this.productRepository = productRepository;</span>
+<span class="fc" id="L38">        this.categoryRepository = categoryRepository;</span>
+<span class="fc" id="L39">    }</span>
+
+    /**
+     * F1 : crée un produit.
+     *
+     * @throws DuplicateProductException  si le SKU est déjà utilisé (RG2)
+     * @throws CategoryNotFoundException si la catégorie n'existe pas (RG5)
+     */
+    @Transactional
+    public ProductResponse create(ProductRequest request) {
+<span class="fc bfc" id="L49" title="All 2 branches covered.">        if (productRepository.existsBySku(request.sku())) {</span>
+<span class="fc" id="L50">            throw new DuplicateProductException(request.sku());</span>
+        }
+<span class="fc" id="L52">        Category category = getCategoryOrThrow(request.categoryId());</span>
+<span class="fc" id="L53">        Product saved = productRepository.save(ProductMapper.toEntity(request, category));</span>
+<span class="fc" id="L54">        return ProductMapper.toResponse(saved);</span>
+    }
+
+    /**
+     * F2 : renvoie un produit.
+     *
+     * @throws ProductNotFoundException si le produit n'existe pas (RG7)
+     */
+    public ProductResponse findById(Long id) {
+<span class="fc" id="L63">        return ProductMapper.toResponse(getProductOrThrow(id));</span>
+    }
+
+    /**
+     * F3 : liste paginée et triée ; chaque filtre (nom, catégorie, prix min et max) est facultatif.
+     *
+     * @throws InvalidParameterException si le tri porte sur un champ non autorisé
+     */
+    public PageResponse&lt;ProductResponse&gt; search(String name, Long categoryId,
+                                                BigDecimal minPrice, BigDecimal maxPrice, Pageable pageable) {
+<span class="fc" id="L73">        pageable.getSort().forEach(order -&gt; {</span>
+<span class="pc bpc" id="L74" title="1 of 2 branches missed.">            if (!SORTABLE_FIELDS.contains(order.getProperty())) {</span>
+<span class="fc" id="L75">                throw new InvalidParameterException(&quot;Tri impossible sur le champ &quot; + order.getProperty());</span>
+            }
+<span class="nc" id="L77">        });</span>
+<span class="fc" id="L78">        return PageResponse.from(</span>
+<span class="fc" id="L79">                productRepository.search(name, categoryId, minPrice, maxPrice, pageable),</span>
+                ProductMapper::toResponse);
+    }
+
+    /**
+     * F4 : remplace toutes les données modifiables d'un produit.
+     *
+     * @throws ProductNotFoundException  si le produit n'existe pas (RG7)
+     * @throws DuplicateProductException  si le nouveau SKU appartient à un autre produit (RG2)
+     * @throws CategoryNotFoundException si la catégorie n'existe pas (RG5)
+     */
+    @Transactional
+    public ProductResponse update(Long id, ProductRequest request) {
+<span class="fc" id="L92">        Product product = getProductOrThrow(id);</span>
+<span class="pc bpc" id="L93" title="1 of 2 branches missed.">        boolean skuChanged = !product.getSku().equals(request.sku());</span>
+<span class="pc bpc" id="L94" title="1 of 4 branches missed.">        if (skuChanged &amp;&amp; productRepository.existsBySku(request.sku())) {</span>
+<span class="fc" id="L95">            throw new DuplicateProductException(request.sku());</span>
+        }
+<span class="fc" id="L97">        Category category = getCategoryOrThrow(request.categoryId());</span>
+<span class="fc" id="L98">        ProductMapper.updateEntity(product, request, category);</span>
+<span class="fc" id="L99">        return ProductMapper.toResponse(productRepository.save(product));</span>
+    }
+
+    /**
+     * F5 : ajoute (delta positif) ou retire (delta négatif) une quantité au stock.
+     *
+     * @throws ProductNotFoundException    si le produit n'existe pas (RG7)
+     * @throws InsufficientStockException si la sortie dépasse le stock disponible (RG6)
+     */
+    @Transactional
+    public ProductResponse adjustStock(Long id, int delta) {
+<span class="fc" id="L110">        Product product = getProductOrThrow(id);</span>
+<span class="fc" id="L111">        int newQuantity = product.getQuantity() + delta;</span>
+<span class="fc bfc" id="L112" title="All 2 branches covered.">        if (newQuantity &lt; 0) {</span>
+<span class="fc" id="L113">            throw new InsufficientStockException(product.getQuantity(), -delta);</span>
+        }
+<span class="fc" id="L115">        product.setQuantity(newQuantity);</span>
+<span class="fc" id="L116">        return ProductMapper.toResponse(productRepository.save(product));</span>
+    }
+
+    /**
+     * F6 : supprime un produit.
+     *
+     * @throws ProductNotFoundException si le produit n'existe pas (RG7)
+     */
+    @Transactional
+    public void delete(Long id) {
+<span class="fc" id="L126">        productRepository.delete(getProductOrThrow(id));</span>
+<span class="fc" id="L127">    }</span>
+
+    private Product getProductOrThrow(Long id) {
+<span class="fc" id="L130">        return productRepository.findById(id).orElseThrow(() -&gt; new ProductNotFoundException(id));</span>
+    }
+
+    private Category getCategoryOrThrow(Long id) {
+<span class="fc" id="L134">        return categoryRepository.findById(id).orElseThrow(() -&gt; new CategoryNotFoundException(id));</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.13.202504020838</span></div></body></html>

@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="fr"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>CategoryService.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">gestion-produits</a> &gt; <a href="index.source.html" class="el_package">com.eadl.gestionproduits.service</a> &gt; <span class="el_source">CategoryService.java</span></div><h1>CategoryService.java</h1><pre class="source lang-java linenums">package com.eadl.gestionproduits.service;
+
+import com.eadl.gestionproduits.dto.CategoryRequest;
+import com.eadl.gestionproduits.dto.CategoryResponse;
+import com.eadl.gestionproduits.entity.Category;
+import com.eadl.gestionproduits.exception.DuplicateCategoryException;
+import com.eadl.gestionproduits.mapper.CategoryMapper;
+import com.eadl.gestionproduits.repository.CategoryRepository;
+import org.springframework.data.domain.Sort;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
+
+/**
+ * Gestion des catégories (F7).
+ */
+@Service
+@Transactional(readOnly = true)
+public class CategoryService {
+
+    private final CategoryRepository categoryRepository;
+
+<span class="fc" id="L24">    public CategoryService(CategoryRepository categoryRepository) {</span>
+<span class="fc" id="L25">        this.categoryRepository = categoryRepository;</span>
+<span class="fc" id="L26">    }</span>
+
+    /**
+     * Crée une catégorie.
+     *
+     * @throws DuplicateCategoryException si une catégorie porte déjà ce nom
+     */
+    @Transactional
+    public CategoryResponse create(CategoryRequest request) {
+<span class="fc" id="L35">        String name = request.name().trim();</span>
+<span class="fc bfc" id="L36" title="All 2 branches covered.">        if (categoryRepository.existsByNameIgnoreCase(name)) {</span>
+<span class="fc" id="L37">            throw new DuplicateCategoryException(name);</span>
+        }
+<span class="fc" id="L39">        return CategoryMapper.toResponse(categoryRepository.save(new Category(name)));</span>
+    }
+
+    /**
+     * Liste toutes les catégories, triées par nom.
+     */
+    public List&lt;CategoryResponse&gt; findAll() {
+<span class="fc" id="L46">        return categoryRepository.findAll(Sort.by(&quot;name&quot;)).stream()</span>
+<span class="fc" id="L47">                .map(CategoryMapper::toResponse)</span>
+<span class="fc" id="L48">                .toList();</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.13.202504020838</span></div></body></html>
