@@ -36,3 +36,4 @@ build/
 .sonar/
 .scannerwork/
 .claude/
+guide-ami/
