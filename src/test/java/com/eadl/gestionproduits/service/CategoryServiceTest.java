@@ -49,7 +49,9 @@ class CategoryServiceTest {
     void create_whenNameAlreadyUsed_throwsDuplicateCategoryException() {
         when(categoryRepository.existsByNameIgnoreCase("Informatique")).thenReturn(true);
 
-        assertThatThrownBy(() -> categoryService.create(new CategoryRequest("Informatique")))
+        CategoryRequest request = new CategoryRequest("Informatique");
+
+        assertThatThrownBy(() -> categoryService.create(request))
                 .isInstanceOf(DuplicateCategoryException.class);
 
         verify(categoryRepository, never()).save(any());

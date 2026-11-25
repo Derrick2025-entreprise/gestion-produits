@@ -33,22 +33,25 @@ public class GlobalExceptionHandler {
     private static final String INVALID_DATA = "Données invalides";
     private static final String INVALID_PARAMETERS = "Paramètres de requête invalides";
 
-    @ExceptionHandler(ResourceNotFoundException.class)
-    public ResponseEntity<ApiError> handleNotFound(ResourceNotFoundException ex, HttpServletRequest req) {
-        log.warn("{} sur {} : {}", ex.getCode(), req.getRequestURI(), ex.getMessage());
-        return build(HttpStatus.NOT_FOUND, ex.getCode(), ex.getMessage(), req, List.of());
+    @ExceptionHandler({ProductNotFoundException.class, CategoryNotFoundException.class})
+    public ResponseEntity<ApiError> handleNotFound(BusinessException ex, HttpServletRequest req) {
+        return business(HttpStatus.NOT_FOUND, ex, req);
     }
 
-    @ExceptionHandler(ConflictException.class)
-    public ResponseEntity<ApiError> handleConflict(ConflictException ex, HttpServletRequest req) {
-        log.warn("{} sur {} : {}", ex.getCode(), req.getRequestURI(), ex.getMessage());
-        return build(HttpStatus.CONFLICT, ex.getCode(), ex.getMessage(), req, List.of());
+    @ExceptionHandler({DuplicateProductException.class, DuplicateCategoryException.class,
+            InsufficientStockException.class})
+    public ResponseEntity<ApiError> handleConflict(BusinessException ex, HttpServletRequest req) {
+        return business(HttpStatus.CONFLICT, ex, req);
     }
 
     @ExceptionHandler(InvalidParameterException.class)
-    public ResponseEntity<ApiError> handleInvalidParameter(InvalidParameterException ex, HttpServletRequest req) {
+    public ResponseEntity<ApiError> handleInvalidParameter(BusinessException ex, HttpServletRequest req) {
+        return business(HttpStatus.BAD_REQUEST, ex, req);
+    }
+
+    private static ResponseEntity<ApiError> business(HttpStatus status, BusinessException ex, HttpServletRequest req) {
         log.warn("{} sur {} : {}", ex.getCode(), req.getRequestURI(), ex.getMessage());
-        return build(HttpStatus.BAD_REQUEST, ex.getCode(), ex.getMessage(), req, List.of());
+        return build(status, ex.getCode(), ex.getMessage(), req, List.of());
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)

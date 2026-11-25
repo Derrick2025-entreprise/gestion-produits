@@ -8,7 +8,6 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
@@ -34,13 +33,11 @@ public class CategoryController {
     }
 
     @Operation(summary = "Créer une catégorie")
-    @ApiResponses({
-            @ApiResponse(responseCode = "201", description = "Catégorie créée"),
-            @ApiResponse(responseCode = "400", description = "Nom absent ou trop long",
-                    content = @Content(schema = @Schema(implementation = ApiError.class))),
-            @ApiResponse(responseCode = "409", description = "Une catégorie porte déjà ce nom",
-                    content = @Content(schema = @Schema(implementation = ApiError.class)))
-    })
+    @ApiResponse(responseCode = "201", description = "Catégorie créée")
+    @ApiResponse(responseCode = "400", description = "Nom absent ou trop long",
+            content = @Content(schema = @Schema(implementation = ApiError.class)))
+    @ApiResponse(responseCode = "409", description = "Une catégorie porte déjà ce nom",
+            content = @Content(schema = @Schema(implementation = ApiError.class)))
     @PostMapping
     public ResponseEntity<CategoryResponse> create(@Valid @RequestBody CategoryRequest request) {
         CategoryResponse created = categoryService.create(request);

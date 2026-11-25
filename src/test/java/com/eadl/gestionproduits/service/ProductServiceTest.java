@@ -81,7 +81,9 @@ class ProductServiceTest {
     void create_whenSkuAlreadyUsed_throwsDuplicateProductException() {
         when(productRepository.existsBySku("LAP-001")).thenReturn(true);
 
-        assertThatThrownBy(() -> service.create(request("LAP-001")))
+        ProductRequest request = request("LAP-001");
+
+        assertThatThrownBy(() -> service.create(request))
                 .isInstanceOf(DuplicateProductException.class);
         verify(productRepository, never()).save(any());
     }
@@ -91,7 +93,9 @@ class ProductServiceTest {
         when(productRepository.existsBySku("LAP-001")).thenReturn(false);
         when(categoryRepository.findById(1L)).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> service.create(request("LAP-001")))
+        ProductRequest request = request("LAP-001");
+
+        assertThatThrownBy(() -> service.create(request))
                 .isInstanceOf(CategoryNotFoundException.class);
     }
 
@@ -151,7 +155,9 @@ class ProductServiceTest {
         when(productRepository.findById(7L)).thenReturn(Optional.of(product(12)));
         when(productRepository.existsBySku("LAP-002")).thenReturn(true);
 
-        assertThatThrownBy(() -> service.update(7L, request("LAP-002")))
+        ProductRequest request = request("LAP-002");
+
+        assertThatThrownBy(() -> service.update(7L, request))
                 .isInstanceOf(DuplicateProductException.class);
     }
 

@@ -1,6 +1,6 @@
 package com.eadl.gestionproduits.exception;
 
-public class InsufficientStockException extends ConflictException {
+public class InsufficientStockException extends BusinessException {
 
     public InsufficientStockException(int available, int requested) {
         super(ErrorCodes.INSUFFICIENT_STOCK,

@@ -11,7 +11,6 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Max;
@@ -49,15 +48,13 @@ public class ProductController {
     }
 
     @Operation(summary = "Créer un produit")
-    @ApiResponses({
-            @ApiResponse(responseCode = "201", description = "Produit créé ; l'en-tête Location donne son adresse"),
-            @ApiResponse(responseCode = "400", description = "Données invalides",
-                    content = @Content(schema = @Schema(implementation = ApiError.class))),
-            @ApiResponse(responseCode = "404", description = "Catégorie introuvable",
-                    content = @Content(schema = @Schema(implementation = ApiError.class))),
-            @ApiResponse(responseCode = "409", description = "SKU déjà utilisé",
-                    content = @Content(schema = @Schema(implementation = ApiError.class)))
-    })
+    @ApiResponse(responseCode = "201", description = "Produit créé ; l'en-tête Location donne son adresse")
+    @ApiResponse(responseCode = "400", description = "Données invalides",
+            content = @Content(schema = @Schema(implementation = ApiError.class)))
+    @ApiResponse(responseCode = "404", description = "Catégorie introuvable",
+            content = @Content(schema = @Schema(implementation = ApiError.class)))
+    @ApiResponse(responseCode = "409", description = "SKU déjà utilisé",
+            content = @Content(schema = @Schema(implementation = ApiError.class)))
     @PostMapping
     public ResponseEntity<ProductResponse> create(@Valid @RequestBody ProductRequest request) {
         ProductResponse created = productService.create(request);
@@ -67,11 +64,9 @@ public class ProductController {
     }
 
     @Operation(summary = "Lister les produits (pagination, tri, filtres)")
-    @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "Page de produits"),
-            @ApiResponse(responseCode = "400", description = "Paramètre invalide (taille, tri, prix...)",
-                    content = @Content(schema = @Schema(implementation = ApiError.class)))
-    })
+    @ApiResponse(responseCode = "200", description = "Page de produits")
+    @ApiResponse(responseCode = "400", description = "Paramètre invalide (taille, tri, prix...)",
+            content = @Content(schema = @Schema(implementation = ApiError.class)))
     @GetMapping
     public ResponseEntity<PageResponse<ProductResponse>> search(
             @Parameter(description = "Numéro de page, à partir de 0", example = "0")
@@ -93,13 +88,11 @@ public class ProductController {
     }
 
     @Operation(summary = "Récupérer un produit par son identifiant")
-    @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "Produit trouvé"),
-            @ApiResponse(responseCode = "400", description = "Identifiant non numérique",
-                    content = @Content(schema = @Schema(implementation = ApiError.class))),
-            @ApiResponse(responseCode = "404", description = "Produit introuvable",
-                    content = @Content(schema = @Schema(implementation = ApiError.class)))
-    })
+    @ApiResponse(responseCode = "200", description = "Produit trouvé")
+    @ApiResponse(responseCode = "400", description = "Identifiant non numérique",
+            content = @Content(schema = @Schema(implementation = ApiError.class)))
+    @ApiResponse(responseCode = "404", description = "Produit introuvable",
+            content = @Content(schema = @Schema(implementation = ApiError.class)))
     @GetMapping("/{id}")
     public ResponseEntity<ProductResponse> findById(
             @Parameter(description = "Identifiant du produit", example = "1") @PathVariable("id") Long id) {
@@ -107,15 +100,13 @@ public class ProductController {
     }
 
     @Operation(summary = "Modifier un produit (remplace toutes ses données)")
-    @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "Produit modifié"),
-            @ApiResponse(responseCode = "400", description = "Données invalides",
-                    content = @Content(schema = @Schema(implementation = ApiError.class))),
-            @ApiResponse(responseCode = "404", description = "Produit ou catégorie introuvable",
-                    content = @Content(schema = @Schema(implementation = ApiError.class))),
-            @ApiResponse(responseCode = "409", description = "SKU déjà utilisé par un autre produit",
-                    content = @Content(schema = @Schema(implementation = ApiError.class)))
-    })
+    @ApiResponse(responseCode = "200", description = "Produit modifié")
+    @ApiResponse(responseCode = "400", description = "Données invalides",
+            content = @Content(schema = @Schema(implementation = ApiError.class)))
+    @ApiResponse(responseCode = "404", description = "Produit ou catégorie introuvable",
+            content = @Content(schema = @Schema(implementation = ApiError.class)))
+    @ApiResponse(responseCode = "409", description = "SKU déjà utilisé par un autre produit",
+            content = @Content(schema = @Schema(implementation = ApiError.class)))
     @PutMapping("/{id}")
     public ResponseEntity<ProductResponse> update(
             @Parameter(description = "Identifiant du produit", example = "1") @PathVariable("id") Long id,
@@ -124,15 +115,13 @@ public class ProductController {
     }
 
     @Operation(summary = "Ajuster le stock (entrée si delta > 0, sortie si delta < 0)")
-    @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "Stock ajusté"),
-            @ApiResponse(responseCode = "400", description = "delta absent ou égal à 0",
-                    content = @Content(schema = @Schema(implementation = ApiError.class))),
-            @ApiResponse(responseCode = "404", description = "Produit introuvable",
-                    content = @Content(schema = @Schema(implementation = ApiError.class))),
-            @ApiResponse(responseCode = "409", description = "Stock insuffisant pour cette sortie",
-                    content = @Content(schema = @Schema(implementation = ApiError.class)))
-    })
+    @ApiResponse(responseCode = "200", description = "Stock ajusté")
+    @ApiResponse(responseCode = "400", description = "delta absent ou égal à 0",
+            content = @Content(schema = @Schema(implementation = ApiError.class)))
+    @ApiResponse(responseCode = "404", description = "Produit introuvable",
+            content = @Content(schema = @Schema(implementation = ApiError.class)))
+    @ApiResponse(responseCode = "409", description = "Stock insuffisant pour cette sortie",
+            content = @Content(schema = @Schema(implementation = ApiError.class)))
     @PatchMapping("/{id}/stock")
     public ResponseEntity<ProductResponse> adjustStock(
             @Parameter(description = "Identifiant du produit", example = "1") @PathVariable("id") Long id,
@@ -141,11 +130,9 @@ public class ProductController {
     }
 
     @Operation(summary = "Supprimer un produit")
-    @ApiResponses({
-            @ApiResponse(responseCode = "204", description = "Produit supprimé", content = @Content),
-            @ApiResponse(responseCode = "404", description = "Produit introuvable",
-                    content = @Content(schema = @Schema(implementation = ApiError.class)))
-    })
+    @ApiResponse(responseCode = "204", description = "Produit supprimé", content = @Content)
+    @ApiResponse(responseCode = "404", description = "Produit introuvable",
+            content = @Content(schema = @Schema(implementation = ApiError.class)))
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(
             @Parameter(description = "Identifiant du produit", example = "1") @PathVariable("id") Long id) {
