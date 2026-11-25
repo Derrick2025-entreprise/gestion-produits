@@ -19,7 +19,9 @@
 		<springdoc.version>3.0.3</springdoc.version>
 		<jacoco.version>0.8.13</jacoco.version>
 		<!-- SonarQube -->
-		<sonar.projectKey>products-api</sonar.projectKey>
+		<sonar.host.url>https://sonarcloud.io</sonar.host.url>
+		<sonar.organization>derrick2025-entreprise</sonar.organization>
+		<sonar.projectKey>derrick2025-entreprise_gestion-produits</sonar.projectKey>
 		<sonar.coverage.jacoco.xmlReportPaths>target/site/jacoco/jacoco.xml</sonar.coverage.jacoco.xmlReportPaths>
 		<sonar.coverage.exclusions>**/*Application.java,**/config/**</sonar.coverage.exclusions>
 	</properties>
